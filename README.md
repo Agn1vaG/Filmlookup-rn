@@ -47,31 +47,35 @@ MOVIEAPP/
 ---
 
 ## Installation
+```
 npm install
 npx expo start
+```
 
 ---
 
 ## Environment Variables  
+```
 Create a `.env` file:
 EXPO_PUBLIC_TMDB_API_KEY=d2945534190db6cc1a2c97091d113ad8
 EXPO_PUBLIC_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
-
 Expo requires the `EXPO_PUBLIC_` prefix for client-side variables.
-
+```
 ---
 
 ## Build (Android)
+
 expo build:android
 
 ---
 
 ## Requirements
+```
 - Node.js  
 - Expo CLI  
 - TMDB API key  
 - Appwrite project (Users + Database)  
-
+```
 ---
 
 ## Notes
