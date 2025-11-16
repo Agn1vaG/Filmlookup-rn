@@ -15,31 +15,34 @@ React Native + Expo Router application for searching movies, viewing details, ha
 ---
 
 ## Project Structure
+
+```
 MOVIEAPP/
-├─ app/
-│ ├─ (tabs)/
-│ │ ├─ _layout.tsx
-│ │ ├─ index.tsx
-│ │ ├─ profile.tsx
-│ │ ├─ save.tsx
-│ │ └─ search.tsx
-│ ├─ movies/
-│ │ ├─ [id].tsx
-│ │ └─ _layout.tsx
-│ ├─ login.tsx
-│ └─ signup.tsx
-├─ assets/
-├─ components/
-├─ constants/
-├─ interfaces/
-├─ services/
-├─ types/
-├─ .env
-├─ package.json
-├─ tailwind.config.js
-├─ postcss.config.js
-├─ tsconfig.json
-└─ README.md
+ ├─ app/
+ │   ├─ (tabs)/
+ │   │   ├─ _layout.tsx
+ │   │   ├─ index.tsx
+ │   │   ├─ profile.tsx
+ │   │   ├─ save.tsx
+ │   │   └─ search.tsx
+ │   ├─ movies/
+ │   │   ├─ [id].tsx
+ │   │   └─ _layout.tsx
+ │   ├─ login.tsx
+ │   └─ signup.tsx
+ ├─ assets/
+ ├─ components/
+ ├─ constants/
+ ├─ interfaces/
+ ├─ services/
+ ├─ types/
+ ├─ .env
+ ├─ package.json
+ ├─ tailwind.config.js
+ ├─ postcss.config.js
+ ├─ tsconfig.json
+ └─ README.md
+```
 
 ---
 
