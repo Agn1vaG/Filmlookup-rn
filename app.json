@@ -23,7 +23,6 @@
         "monochromeImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
       "package": "com.agniva007.filmlookup"
     },
     "web": {
