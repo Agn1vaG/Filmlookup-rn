@@ -1,36 +1,41 @@
 {
   "expo": {
     "name": "Movie_app",
-    "slug": "Movie_app",
+    "slug": "movieapp",
     "version": "1.0.0",
     "orientation": "portrait",
-  "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "movieapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.agniva007.filmlookup",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-    "foregroundImage": "./assets/images/logo.png",
-    "backgroundImage": "./assets/images/logo.png",
-    "monochromeImage": "./assets/images/logo.png"
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundImage": "./assets/images/logo.png",
+        "monochromeImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.agniva007.filmlookup"
     },
     "web": {
       "output": "static",
-    "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/logo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-    "image": "./assets/images/logo.png",
+          "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -44,6 +49,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "69ac21e2-d25b-43d6-9ebf-4e3da18e65d8"
+      }
+    },
+    "owner": "agniva007s-team"
   }
 }
