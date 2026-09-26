@@ -17,7 +17,7 @@ export default function PolarisScreen({
   return (
     <SafeAreaView
       edges={edges}
-      className={`flex-1 bg-background ${className}`}
+      className={`flex-1 ${className}`}
     >
       <View className="flex-1" {...props}>
         {children}

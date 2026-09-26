@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 
 import { Image, Text, View } from "react-native";
 
-import { fetchMovieDetails } from "@/services/api";
+import {
+  fetchMovieDetails,
+  fetchSeriesDetails,
+  MediaDetails,
+} from "@/services/api";
 
 type MovieCardProps = {
   id: number;
@@ -14,39 +18,17 @@ type MovieCardProps = {
   first_air_date?: string;
 };
 
-/*
-|--------------------------------------------------------------------------
-| CARD SIZE
-|--------------------------------------------------------------------------
-*/
-
 const CARD_WIDTH = 390;
 const CARD_HEIGHT = 630;
 
-/*
-|--------------------------------------------------------------------------
-| MOVIE DETAILS CACHE
-|--------------------------------------------------------------------------
-*/
+const detailsCache = new Map<
+  string,
+  MediaDetails
+>();
 
-type MovieDetailsData = {
-  runtime?: number | null;
-  genres?: {
-    id: number;
-    name: string;
-  }[];
-  vote_average?: number;
-};
-
-const movieDetailsCache = new Map<number, MovieDetailsData>();
-
-/*
-|--------------------------------------------------------------------------
-| FORMAT RUNTIME
-|--------------------------------------------------------------------------
-*/
-
-const formatRuntime = (runtime?: number | null) => {
+const formatRuntime = (
+  runtime?: number | null
+) => {
   if (!runtime || runtime <= 0) {
     return "—";
   }
@@ -65,29 +47,107 @@ const formatRuntime = (runtime?: number | null) => {
   return `${hours}h ${minutes}m`;
 };
 
+const formatSeriesStats = (
+  seasons?: number,
+  episodes?: number
+) => {
+  if (
+    seasons === undefined ||
+    episodes === undefined
+  ) {
+    return "—";
+  }
+
+  return `${seasons} Seasons • ${episodes} Episodes`;
+};
+
+const formatAirDate = (date?: string) => {
+  if (!date) {
+    return "—";
+  }
+
+  const parts = date.split("-");
+
+  if (parts.length < 2) {
+    return date;
+  }
+
+  const year = parts[0];
+  const month = Number(parts[1]);
+
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  if (
+    month >= 1 &&
+    month <= 12
+  ) {
+    return `${months[month - 1]} ${year}`;
+  }
+
+  return year;
+};
+
 const MovieCard = ({
   id,
   poster_path,
+  title,
+  name,
   vote_average,
+  release_date,
+  first_air_date,
 }: MovieCardProps) => {
-  const [details, setDetails] = useState<MovieDetailsData | null>(
-    movieDetailsCache.get(id) ?? null
-  );
+  /*
+  |--------------------------------------------------------------------------
+  | DETECT MEDIA TYPE
+  |--------------------------------------------------------------------------
+  */
 
-  const posterUri = poster_path
-    ? `https://image.tmdb.org/t/p/w500${poster_path}`
-    : "https://placehold.co/600x900/1a1a1a/ffffff.png";
+  const isSeries =
+    !!name && !title;
+
+  const mediaType = isSeries
+    ? "tv"
+    : "movie";
+
+  const mediaTitle =
+    name || title || "Untitled";
+
+  const airDate = isSeries
+    ? first_air_date
+    : release_date;
+
+  const cacheKey =
+    `${mediaType}-${id}`;
 
   /*
   |--------------------------------------------------------------------------
-  | FETCH MOVIE DETAILS
+  | DETAILS
   |--------------------------------------------------------------------------
   */
+
+  const [details, setDetails] =
+    useState<MediaDetails | null>(
+      detailsCache.get(cacheKey) ?? null
+    );
 
   useEffect(() => {
     let isMounted = true;
 
-    const cachedDetails = movieDetailsCache.get(id);
+    const cachedDetails =
+      detailsCache.get(cacheKey);
 
     if (cachedDetails) {
       setDetails(cachedDetails);
@@ -96,24 +156,31 @@ const MovieCard = ({
 
     const loadDetails = async () => {
       try {
-        const data = await fetchMovieDetails(id.toString());
+        const data = isSeries
+          ? await fetchSeriesDetails(
+              id.toString()
+            )
+          : await fetchMovieDetails(
+              id.toString()
+            );
 
         if (!isMounted) {
           return;
         }
 
-        const movieDetails: MovieDetailsData = {
-          runtime: data.runtime,
-          genres: data.genres,
-          vote_average: data.vote_average,
-        };
+        detailsCache.set(
+          cacheKey,
+          data
+        );
 
-        movieDetailsCache.set(id, movieDetails);
-
-        setDetails(movieDetails);
+        setDetails(data);
       } catch (error) {
         console.log(
-          `Failed to load details for movie ${id}:`,
+          `Failed to load ${
+            isSeries
+              ? "series"
+              : "movie"
+          } details for ${id}:`,
           error
         );
       }
@@ -124,33 +191,48 @@ const MovieCard = ({
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, cacheKey, isSeries]);
 
   /*
   |--------------------------------------------------------------------------
-  | DYNAMIC METADATA
+  | DISPLAY DATA
   |--------------------------------------------------------------------------
   */
 
-  const runtime = formatRuntime(details?.runtime);
+  const runtime = formatRuntime(
+    details?.runtime
+  );
+
+  const seriesStats =
+    formatSeriesStats(
+      details?.number_of_seasons,
+      details?.number_of_episodes
+    );
 
   const genres =
     details?.genres
       ?.slice(0, 3)
-      .map((genre) => genre.name)
+      .map(
+        (genre) => genre.name
+      )
       .join(" • ") || "—";
 
   const rating =
-    details?.vote_average ?? vote_average ?? 0;
+    details?.vote_average ??
+    vote_average ??
+    0;
 
   const formattedRating =
-    rating > 0 ? rating.toFixed(1) : "—";
+    rating > 0
+      ? rating.toFixed(1)
+      : "—";
 
-  /*
-  |--------------------------------------------------------------------------
-  | CARD
-  |--------------------------------------------------------------------------
-  */
+  const formattedDate =
+    formatAirDate(airDate);
+
+  const posterUri = poster_path
+    ? `https://image.tmdb.org/t/p/w500${poster_path}`
+    : "https://placehold.co/600x900/1a1a1a/ffffff.png";
 
   return (
     <View
@@ -178,10 +260,10 @@ const MovieCard = ({
           elevation: 12,
         }}
       >
-        {/* POSTER */}
-
         <Image
-          source={{ uri: posterUri }}
+          source={{
+            uri: posterUri,
+          }}
           resizeMode="cover"
           style={{
             width: "100%",
@@ -189,34 +271,73 @@ const MovieCard = ({
           }}
         />
 
-        {/* RUNTIME */}
+        {/* TITLE */}
+
+        <View
+          style={{
+            position: "absolute",
+            left: 16,
+            top: 16,
+            maxWidth: 280,
+            paddingHorizontal: 15,
+            minHeight: 34,
+            borderRadius: 17,
+            justifyContent: "center",
+            backgroundColor:
+              "rgba(8,8,12,0.62)",
+            borderWidth: 1,
+            borderColor:
+              "rgba(255,255,255,0.16)",
+          }}
+        >
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={{
+              color: "#FFFFFF",
+              fontSize: 13,
+              fontWeight: "600",
+            }}
+          >
+            {mediaTitle}
+          </Text>
+        </View>
+
+        {/* MOVIE RUNTIME / SERIES STATS */}
 
         <View
           style={{
             position: "absolute",
             left: 16,
             bottom: 54,
-            height: 34,
+            maxWidth: 270,
+            minHeight: 34,
             paddingHorizontal: 15,
             borderRadius: 17,
             justifyContent: "center",
-            backgroundColor: "rgba(8,8,12,0.62)",
+            backgroundColor:
+              "rgba(8,8,12,0.62)",
             borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.16)",
+            borderColor:
+              "rgba(255,255,255,0.16)",
           }}
         >
           <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
             style={{
               color: "#FFFFFF",
               fontSize: 13,
               fontWeight: "500",
             }}
           >
-            {runtime}
+            {isSeries
+              ? seriesStats
+              : runtime}
           </Text>
         </View>
 
-        {/* GENRES — MAX 3 */}
+        {/* GENRES */}
 
         <View
           style={{
@@ -228,9 +349,11 @@ const MovieCard = ({
             paddingHorizontal: 15,
             borderRadius: 17,
             justifyContent: "center",
-            backgroundColor: "rgba(8,8,12,0.62)",
+            backgroundColor:
+              "rgba(8,8,12,0.62)",
             borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.16)",
+            borderColor:
+              "rgba(255,255,255,0.16)",
           }}
         >
           <Text
@@ -257,9 +380,11 @@ const MovieCard = ({
             paddingHorizontal: 14,
             borderRadius: 17,
             justifyContent: "center",
-            backgroundColor: "rgba(8,8,12,0.62)",
+            backgroundColor:
+              "rgba(8,8,12,0.62)",
             borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.16)",
+            borderColor:
+              "rgba(255,255,255,0.16)",
           }}
         >
           <Text
@@ -270,6 +395,35 @@ const MovieCard = ({
             }}
           >
             ★ {formattedRating}
+          </Text>
+        </View>
+
+        {/* AIR DATE */}
+
+        <View
+          style={{
+            position: "absolute",
+            right: 16,
+            top: 16,
+            height: 34,
+            paddingHorizontal: 14,
+            borderRadius: 17,
+            justifyContent: "center",
+            backgroundColor:
+              "rgba(8,8,12,0.62)",
+            borderWidth: 1,
+            borderColor:
+              "rgba(255,255,255,0.16)",
+          }}
+        >
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: 13,
+              fontWeight: "500",
+            }}
+          >
+            {formattedDate}
           </Text>
         </View>
       </View>

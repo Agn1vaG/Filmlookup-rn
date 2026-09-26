@@ -1,79 +1,132 @@
 import React, { ReactNode } from "react";
-import { ImageBackground, StyleSheet, View } from "react-native";
 
-import { images } from "@/constants/images";
+import {
+  ImageBackground,
+  StyleSheet,
+  View,
+} from "react-native";
+
+import { LinearGradient } from "expo-linear-gradient";
 
 type PolarisBackgroundProps = {
   children: ReactNode;
-  variant?: "default" | "home" | "search" | "solo" | "together" | "profile" | "auth";
+
+  variant?:
+    | "default"
+    | "home"
+    | "search"
+    | "solo"
+    | "together"
+    | "profile"
+    | "auth";
+
+  posterPath?: string | null;
 };
 
 export default function PolarisBackground({
   children,
   variant = "default",
+  posterPath = null,
 }: PolarisBackgroundProps) {
+  const isHome = variant === "home";
+
+  const posterUri = posterPath
+    ? `https://image.tmdb.org/t/p/w780${posterPath}`
+    : null;
+
   return (
-    <View className="flex-1 bg-background">
-      {/* Deep space base */}
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            backgroundColor: "#03070C",
-          },
-        ]}
-      />
+    <View style={styles.container}>
 
-      {/* Existing celestial background */}
-      <ImageBackground
-        source={images.bg}
-        resizeMode="cover"
-        style={StyleSheet.absoluteFill}
-        imageStyle={styles.backgroundImage}
-      />
+      {isHome && posterUri ? (
+        <>
+          {/* BLURRED POSTER */}
 
-      {/* Cinematic dark overlay */}
-      <View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            backgroundColor:
-              variant === "auth"
-                ? "rgba(1, 4, 9, 0.28)"
-                : "rgba(1, 4, 9, 0.48)",
-          },
-        ]}
-      />
+          <ImageBackground
+            source={{ uri: posterUri }}
+            resizeMode="cover"
+            blurRadius={70}
+            style={styles.posterBackground}
+            imageStyle={styles.posterImage}
+          />
 
-      {/* Subtle icy-blue atmosphere */}
-      <View
-        pointerEvents="none"
-        style={[
-          styles.atmosphere,
-          {
-            backgroundColor: "rgba(143, 184, 232, 0.045)",
-          },
-        ]}
-      />
+          {/* DARK WASH */}
 
-      {/* Screen content */}
-      <View className="flex-1">{children}</View>
+          <View
+            pointerEvents="none"
+            style={styles.posterDarkOverlay}
+          />
+
+          {/* VERY SOFT ATMOSPHERIC FADE */}
+
+          <LinearGradient
+            pointerEvents="none"
+            colors={[
+              "rgba(11,12,15,0)",
+              "rgba(11,12,15,0.015)",
+              "rgba(11,12,15,0.04)",
+              "rgba(11,12,15,0.09)",
+              "rgba(11,12,15,0.18)",
+              "rgba(11,12,15,0.32)",
+              "rgba(11,12,15,0.52)",
+              "rgba(11,12,15,0.72)",
+              "rgba(11,12,15,0.88)",
+              "#0B0C0F",
+            ]}
+            locations={[
+              0.38,
+              0.46,
+              0.54,
+              0.62,
+              0.70,
+              0.78,
+              0.85,
+              0.92,
+              0.97,
+              1,
+            ]}
+            style={styles.fadeGradient}
+          />
+        </>
+      ) : (
+        <View style={styles.solidBackground} />
+      )}
+
+      <View style={styles.content}>
+        {children}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    opacity: 0.55,
+  container: {
+    flex: 1,
+    backgroundColor: "#0B0C0F",
   },
 
-  atmosphere: {
-    position: "absolute",
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    top: -250,
-    right: -180,
+  solidBackground: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "#0B0C0F",
+  },
+
+  posterBackground: {
+    ...StyleSheet.absoluteFill,
+  },
+
+  posterImage: {
+    opacity: 0.48,
+  },
+
+  posterDarkOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(5, 7, 10, 0.30)",
+  },
+
+  fadeGradient: {
+    ...StyleSheet.absoluteFill,
+  },
+
+  content: {
+    flex: 1,
   },
 });

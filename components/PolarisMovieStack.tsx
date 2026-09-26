@@ -1,4 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import {
   Animated,
@@ -27,10 +31,13 @@ type PolarisMovieStackProps = {
   movies: Movie[];
   onSwipeRight?: (movie: Movie) => void;
   onSwipeLeft?: (movie: Movie) => void;
+  onCurrentMovieChange?: (
+    movie: Movie | undefined
+  ) => void;
 };
 
-const CARD_WIDTH = 390;
-const CARD_HEIGHT = 630;
+const CARD_WIDTH = 350;
+const CARD_HEIGHT = 530;
 
 const SWIPE_THRESHOLD = 120;
 const SWIPE_OUT_DISTANCE = 500;
@@ -45,6 +52,7 @@ export default function PolarisMovieStack({
   movies,
   onSwipeRight,
   onSwipeLeft,
+  onCurrentMovieChange,
 }: PolarisMovieStackProps) {
   const router = useRouter();
 
@@ -54,22 +62,23 @@ export default function PolarisMovieStack({
   |--------------------------------------------------------------------------
   */
 
-  const [deck, setDeck] = useState<Movie[]>([]);
+  const [deck, setDeck] =
+    useState<Movie[]>([]);
 
-  const nextMovieIndex = useRef(0);
+  const nextMovieIndex =
+    useRef(0);
 
   /*
   |--------------------------------------------------------------------------
   | LIVE STATE REFS
   |--------------------------------------------------------------------------
-  |
-  | PanResponder is created once.
-  | These refs make sure it always sees the latest data.
-  |
   */
 
-  const deckRef = useRef<Movie[]>([]);
-  const moviesRef = useRef<Movie[]>(movies);
+  const deckRef =
+    useRef<Movie[]>([]);
+
+  const moviesRef =
+    useRef<Movie[]>(movies);
 
   /*
   |--------------------------------------------------------------------------
@@ -77,22 +86,26 @@ export default function PolarisMovieStack({
   |--------------------------------------------------------------------------
   */
 
-  const frontPosition = useRef(
-    new Animated.ValueXY({
-      x: 0,
-      y: 0,
-    })
-  ).current;
+  const frontPosition =
+    useRef(
+      new Animated.ValueXY({
+        x: 0,
+        y: 0,
+      })
+    ).current;
 
-  const secondProgress = useRef(
-    new Animated.Value(0)
-  ).current;
+  const secondProgress =
+    useRef(
+      new Animated.Value(0)
+    ).current;
 
-  const thirdProgress = useRef(
-    new Animated.Value(0)
-  ).current;
+  const thirdProgress =
+    useRef(
+      new Animated.Value(0)
+    ).current;
 
-  const isAnimating = useRef(false);
+  const isAnimating =
+    useRef(false);
 
   /*
   |--------------------------------------------------------------------------
@@ -100,9 +113,10 @@ export default function PolarisMovieStack({
   |--------------------------------------------------------------------------
   */
 
-  const gestureDirection = useRef<
-    "horizontal" | "vertical" | null
-  >(null);
+  const gestureDirection =
+    useRef<
+      "horizontal" | "vertical" | null
+    >(null);
 
   /*
   |--------------------------------------------------------------------------
@@ -120,25 +134,57 @@ export default function PolarisMovieStack({
 
   /*
   |--------------------------------------------------------------------------
-  | INITIAL MOVIE DATA
+  | REPORT CURRENT FRONT MOVIE
+  |--------------------------------------------------------------------------
+  */
+
+  const currentMovie = deck[0];
+
+  useEffect(() => {
+    onCurrentMovieChange?.(currentMovie);
+  }, [
+    currentMovie?.id,
+    onCurrentMovieChange,
+  ]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | RESET DECK WHEN MOVIE / SERIES DATA CHANGES
   |--------------------------------------------------------------------------
   */
 
   useEffect(() => {
     if (movies.length === 0) {
+      deckRef.current = [];
+      setDeck([]);
+
+      nextMovieIndex.current = 0;
+
       return;
     }
 
-    if (deck.length === 0) {
-      const initialDeck = movies.slice(0, DECK_SIZE);
+    const initialDeck =
+      movies.slice(0, DECK_SIZE);
 
-      deckRef.current = initialDeck;
+    deckRef.current =
+      initialDeck;
 
-      setDeck(initialDeck);
+    setDeck(initialDeck);
 
-      nextMovieIndex.current = initialDeck.length;
-    }
-  }, [movies, deck.length]);
+    nextMovieIndex.current =
+      initialDeck.length;
+
+    frontPosition.setValue({
+      x: 0,
+      y: 0,
+    });
+
+    secondProgress.setValue(0);
+    thirdProgress.setValue(0);
+
+    isAnimating.current = false;
+    gestureDirection.current = null;
+  }, [movies]);
 
   /*
   |--------------------------------------------------------------------------
@@ -146,7 +192,6 @@ export default function PolarisMovieStack({
   |--------------------------------------------------------------------------
   */
 
-  const currentMovie = deck[0];
   const secondMovie = deck[1];
   const thirdMovie = deck[2];
 
@@ -156,29 +201,39 @@ export default function PolarisMovieStack({
   |--------------------------------------------------------------------------
   */
 
-  const rotate = frontPosition.x.interpolate({
-    inputRange: [-CARD_WIDTH, 0, CARD_WIDTH],
-    outputRange: ["-8deg", "0deg", "8deg"],
-    extrapolate: "clamp",
-  });
+  const rotate =
+    frontPosition.x.interpolate({
+      inputRange: [
+        -CARD_WIDTH,
+        0,
+        CARD_WIDTH,
+      ],
+      outputRange: [
+        "-8deg",
+        "0deg",
+        "8deg",
+      ],
+      extrapolate: "clamp",
+    });
 
-  const currentCardScale = frontPosition.x.interpolate({
-    inputRange: [
-      -SWIPE_OUT_DISTANCE,
-      -120,
-      0,
-      120,
-      SWIPE_OUT_DISTANCE,
-    ],
-    outputRange: [
-      0.96,
-      0.99,
-      1,
-      0.99,
-      0.96,
-    ],
-    extrapolate: "clamp",
-  });
+  const currentCardScale =
+    frontPosition.x.interpolate({
+      inputRange: [
+        -SWIPE_OUT_DISTANCE,
+        -120,
+        0,
+        120,
+        SWIPE_OUT_DISTANCE,
+      ],
+      outputRange: [
+        0.96,
+        0.99,
+        1,
+        0.99,
+        0.96,
+      ],
+      extrapolate: "clamp",
+    });
 
   /*
   |--------------------------------------------------------------------------
@@ -188,29 +243,65 @@ export default function PolarisMovieStack({
 
   const rightLabelOpacity =
     frontPosition.x.interpolate({
-      inputRange: [0, 35, 80, 120],
-      outputRange: [0, 0.15, 0.65, 1],
+      inputRange: [
+        0,
+        35,
+        80,
+        120,
+      ],
+      outputRange: [
+        0,
+        0.15,
+        0.65,
+        1,
+      ],
       extrapolate: "clamp",
     });
 
   const leftLabelOpacity =
     frontPosition.x.interpolate({
-      inputRange: [-120, -80, -35, 0],
-      outputRange: [1, 0.65, 0.15, 0],
+      inputRange: [
+        -120,
+        -80,
+        -35,
+        0,
+      ],
+      outputRange: [
+        1,
+        0.65,
+        0.15,
+        0,
+      ],
       extrapolate: "clamp",
     });
 
   const rightLabelTranslateX =
     frontPosition.x.interpolate({
-      inputRange: [0, 40, 120],
-      outputRange: [0, -55, -130],
+      inputRange: [
+        0,
+        40,
+        120,
+      ],
+      outputRange: [
+        0,
+        -55,
+        -130,
+      ],
       extrapolate: "clamp",
     });
 
   const leftLabelTranslateX =
     frontPosition.x.interpolate({
-      inputRange: [-120, -40, 0],
-      outputRange: [130, 55, 0],
+      inputRange: [
+        -120,
+        -40,
+        0,
+      ],
+      outputRange: [
+        130,
+        55,
+        0,
+      ],
       extrapolate: "clamp",
     });
 
@@ -223,14 +314,14 @@ export default function PolarisMovieStack({
   const secondTranslateY =
     secondProgress.interpolate({
       inputRange: [0, 1],
-      outputRange: [14, 0],
+      outputRange: [18, 0],
       extrapolate: "clamp",
     });
 
   const secondScale =
     secondProgress.interpolate({
       inputRange: [0, 1],
-      outputRange: [0.97, 1],
+      outputRange: [0.965, 1],
       extrapolate: "clamp",
     });
 
@@ -243,14 +334,14 @@ export default function PolarisMovieStack({
   const thirdTranslateY =
     thirdProgress.interpolate({
       inputRange: [0, 1],
-      outputRange: [28, 14],
+      outputRange: [36, 18],
       extrapolate: "clamp",
     });
 
   const thirdScale =
     thirdProgress.interpolate({
       inputRange: [0, 1],
-      outputRange: [0.94, 0.97],
+      outputRange: [0.93, 0.965],
       extrapolate: "clamp",
     });
 
@@ -277,11 +368,17 @@ export default function PolarisMovieStack({
       return;
     }
 
-    const currentDeck = deckRef.current;
+    const currentDeck =
+      deckRef.current;
 
-    const movieBeingSwiped = currentDeck[0];
-    const secondMovieNow = currentDeck[1];
-    const thirdMovieNow = currentDeck[2];
+    const movieBeingSwiped =
+      currentDeck[0];
+
+    const secondMovieNow =
+      currentDeck[1];
+
+    const thirdMovieNow =
+      currentDeck[2];
 
     if (
       !movieBeingSwiped ||
@@ -302,47 +399,41 @@ export default function PolarisMovieStack({
     thirdProgress.setValue(0);
 
     Animated.parallel([
-      /*
-      |--------------------------------------------------------------------------
-      | FRONT → OUT
-      |--------------------------------------------------------------------------
-      */
+      Animated.timing(
+        frontPosition,
+        {
+          toValue: {
+            x: destination,
+            y: 30,
+          },
+          duration: 320,
+          easing:
+            Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }
+      ),
 
-      Animated.timing(frontPosition, {
-        toValue: {
-          x: destination,
-          y: 30,
-        },
-        duration: 320,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
+      Animated.timing(
+        secondProgress,
+        {
+          toValue: 1,
+          duration: 320,
+          easing:
+            Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }
+      ),
 
-      /*
-      |--------------------------------------------------------------------------
-      | SECOND → FRONT
-      |--------------------------------------------------------------------------
-      */
-
-      Animated.timing(secondProgress, {
-        toValue: 1,
-        duration: 320,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-
-      /*
-      |--------------------------------------------------------------------------
-      | THIRD → SECOND
-      |--------------------------------------------------------------------------
-      */
-
-      Animated.timing(thirdProgress, {
-        toValue: 1,
-        duration: 320,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
+      Animated.timing(
+        thirdProgress,
+        {
+          toValue: 1,
+          duration: 320,
+          easing:
+            Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }
+      ),
     ]).start(({ finished }) => {
       if (!finished) {
         isAnimating.current = false;
@@ -357,21 +448,28 @@ export default function PolarisMovieStack({
       */
 
       if (direction === "right") {
-        onSwipeRight?.(movieBeingSwiped);
+        onSwipeRight?.(
+          movieBeingSwiped
+        );
       } else {
-        onSwipeLeft?.(movieBeingSwiped);
+        onSwipeLeft?.(
+          movieBeingSwiped
+        );
       }
 
       /*
       |--------------------------------------------------------------------------
-      | GET NEXT MOVIE
+      | GET NEXT MOVIE / SERIES
       |--------------------------------------------------------------------------
       */
 
-      const currentMovies = moviesRef.current;
+      const currentMovies =
+        moviesRef.current;
 
       const nextMovie =
-        currentMovies[nextMovieIndex.current];
+        currentMovies[
+          nextMovieIndex.current
+        ];
 
       const newDeck = [
         secondMovieNow,
@@ -404,7 +502,8 @@ export default function PolarisMovieStack({
       |--------------------------------------------------------------------------
       */
 
-      deckRef.current = newDeck;
+      deckRef.current =
+        newDeck;
 
       setDeck(newDeck);
 
@@ -416,7 +515,7 @@ export default function PolarisMovieStack({
 
   /*
   |--------------------------------------------------------------------------
-  | OPEN MOVIE DETAILS
+  | OPEN DETAILS
   |--------------------------------------------------------------------------
   */
 
@@ -425,7 +524,8 @@ export default function PolarisMovieStack({
       return;
     }
 
-    const movie = deckRef.current[0];
+    const movie =
+      deckRef.current[0];
 
     if (!movie) {
       return;
@@ -433,21 +533,19 @@ export default function PolarisMovieStack({
 
     isAnimating.current = true;
 
-    /*
-    |--------------------------------------------------------------------------
-    | MOVE CARD UP
-    |--------------------------------------------------------------------------
-    */
-
-    Animated.timing(frontPosition, {
-      toValue: {
-        x: 0,
-        y: -CARD_HEIGHT,
-      },
-      duration: 260,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start(({ finished }) => {
+    Animated.timing(
+      frontPosition,
+      {
+        toValue: {
+          x: 0,
+          y: -CARD_HEIGHT,
+        },
+        duration: 260,
+        easing:
+          Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }
+    ).start(({ finished }) => {
       if (!finished) {
         frontPosition.setValue({
           x: 0,
@@ -456,6 +554,7 @@ export default function PolarisMovieStack({
 
         resetGesture();
         isAnimating.current = false;
+
         return;
       }
 
@@ -465,12 +564,6 @@ export default function PolarisMovieStack({
           id: movie.id.toString(),
         },
       });
-
-      /*
-      |--------------------------------------------------------------------------
-      | RESET CARD FOR WHEN USER RETURNS
-      |--------------------------------------------------------------------------
-      */
 
       frontPosition.setValue({
         x: 0,
@@ -489,211 +582,207 @@ export default function PolarisMovieStack({
   |--------------------------------------------------------------------------
   */
 
-  const panResponder = useRef(
-    PanResponder.create({
-      /*
-      |--------------------------------------------------------------------------
-      | DON'T GRAB TOUCH IMMEDIATELY
-      |--------------------------------------------------------------------------
-      */
+  const panResponder =
+    useRef(
+      PanResponder.create({
+        onStartShouldSetPanResponder:
+          () => false,
 
-      onStartShouldSetPanResponder: () => false,
-
-      /*
-      |--------------------------------------------------------------------------
-      | DETERMINE GESTURE DIRECTION
-      |--------------------------------------------------------------------------
-      */
-
-      onMoveShouldSetPanResponder: (_, gesture) => {
-        if (isAnimating.current) {
-          return false;
-        }
-
-        const absX = Math.abs(gesture.dx);
-        const absY = Math.abs(gesture.dy);
-
-        if (
-          absX < GESTURE_DIRECTION_THRESHOLD &&
-          absY < GESTURE_DIRECTION_THRESHOLD
-        ) {
-          return false;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | ONLY UPWARD VERTICAL GESTURES
-        |--------------------------------------------------------------------------
-        */
-
-        if (absY > absX) {
-          if (gesture.dy >= 0) {
+        onMoveShouldSetPanResponder: (
+          _,
+          gesture
+        ) => {
+          if (isAnimating.current) {
             return false;
           }
 
-          gestureDirection.current = "vertical";
+          const absX =
+            Math.abs(gesture.dx);
+
+          const absY =
+            Math.abs(gesture.dy);
+
+          if (
+            absX <
+              GESTURE_DIRECTION_THRESHOLD &&
+            absY <
+              GESTURE_DIRECTION_THRESHOLD
+          ) {
+            return false;
+          }
+
+          /*
+          |--------------------------------------------------------------------------
+          | ONLY UPWARD VERTICAL GESTURES
+          |--------------------------------------------------------------------------
+          */
+
+          if (absY > absX) {
+            if (gesture.dy >= 0) {
+              return false;
+            }
+
+            gestureDirection.current =
+              "vertical";
+
+            return true;
+          }
+
+          /*
+          |--------------------------------------------------------------------------
+          | HORIZONTAL GESTURE
+          |--------------------------------------------------------------------------
+          */
+
+          gestureDirection.current =
+            "horizontal";
 
           return true;
-        }
+        },
 
-        /*
-        |--------------------------------------------------------------------------
-        | HORIZONTAL GESTURE
-        |--------------------------------------------------------------------------
-        */
-
-        gestureDirection.current = "horizontal";
-
-        return true;
-      },
-
-      /*
-      |--------------------------------------------------------------------------
-      | MOVE
-      |--------------------------------------------------------------------------
-      */
-
-      onPanResponderMove: (_, gesture) => {
-        if (isAnimating.current) {
-          return;
-        }
-
-        if (
-          gestureDirection.current ===
-          "horizontal"
-        ) {
-          frontPosition.setValue({
-            x: gesture.dx,
-            y: 0,
-          });
-
-          return;
-        }
-
-        if (
-          gestureDirection.current ===
-          "vertical"
-        ) {
-          const upwardY = Math.min(
-            gesture.dy,
-            0
-          );
-
-          frontPosition.setValue({
-            x: 0,
-            y: upwardY,
-          });
-        }
-      },
-
-      /*
-      |--------------------------------------------------------------------------
-      | RELEASE
-      |--------------------------------------------------------------------------
-      */
-
-      onPanResponderRelease: (_, gesture) => {
-        if (isAnimating.current) {
-          return;
-        }
-
-        const direction =
-          gestureDirection.current;
-
-        /*
-        |--------------------------------------------------------------------------
-        | UP → DETAILS
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-          direction === "vertical" &&
-          gesture.dy <
-            -VERTICAL_SWIPE_THRESHOLD
-        ) {
-          openMovieDetails();
-          return;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | LEFT / RIGHT
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-          direction === "horizontal"
-        ) {
-          if (
-            gesture.dx >
-            SWIPE_THRESHOLD
-          ) {
-            swipeCard("right");
+        onPanResponderMove: (
+          _,
+          gesture
+        ) => {
+          if (isAnimating.current) {
             return;
           }
 
           if (
-            gesture.dx <
-            -SWIPE_THRESHOLD
+            gestureDirection.current ===
+            "horizontal"
           ) {
-            swipeCard("left");
+            frontPosition.setValue({
+              x: gesture.dx,
+              y: 0,
+            });
+
             return;
           }
-        }
+
+          if (
+            gestureDirection.current ===
+            "vertical"
+          ) {
+            const upwardY =
+              Math.min(
+                gesture.dy,
+                0
+              );
+
+            frontPosition.setValue({
+              x: 0,
+              y: upwardY,
+            });
+          }
+        },
+
+        onPanResponderRelease: (
+          _,
+          gesture
+        ) => {
+          if (isAnimating.current) {
+            return;
+          }
+
+          const direction =
+            gestureDirection.current;
+
+          /*
+          |--------------------------------------------------------------------------
+          | UP → DETAILS
+          |--------------------------------------------------------------------------
+          */
+
+          if (
+            direction === "vertical" &&
+            gesture.dy <
+              -VERTICAL_SWIPE_THRESHOLD
+          ) {
+            openMovieDetails();
+            return;
+          }
+
+          /*
+          |--------------------------------------------------------------------------
+          | LEFT / RIGHT
+          |--------------------------------------------------------------------------
+          */
+
+          if (
+            direction === "horizontal"
+          ) {
+            if (
+              gesture.dx >
+              SWIPE_THRESHOLD
+            ) {
+              swipeCard("right");
+              return;
+            }
+
+            if (
+              gesture.dx <
+              -SWIPE_THRESHOLD
+            ) {
+              swipeCard("left");
+              return;
+            }
+          }
+
+          /*
+          |--------------------------------------------------------------------------
+          | NOT ENOUGH → SNAP BACK
+          |--------------------------------------------------------------------------
+          */
+
+          Animated.spring(
+            frontPosition,
+            {
+              toValue: {
+                x: 0,
+                y: 0,
+              },
+              useNativeDriver: true,
+              friction: 7,
+              tension: 45,
+            }
+          ).start(() => {
+            resetGesture();
+          });
+        },
 
         /*
         |--------------------------------------------------------------------------
-        | NOT ENOUGH → SNAP BACK
+        | CANCELLED
         |--------------------------------------------------------------------------
         */
 
-        Animated.spring(
-          frontPosition,
-          {
-            toValue: {
-              x: 0,
-              y: 0,
-            },
-            useNativeDriver: true,
-            friction: 7,
-            tension: 45,
-          }
-        ).start(() => {
-          resetGesture();
-        });
-      },
+        onPanResponderTerminate:
+          () => {
+            if (isAnimating.current) {
+              return;
+            }
 
-      /*
-      |--------------------------------------------------------------------------
-      | CANCELLED
-      |--------------------------------------------------------------------------
-      */
+            Animated.spring(
+              frontPosition,
+              {
+                toValue: {
+                  x: 0,
+                  y: 0,
+                },
+                useNativeDriver: true,
+                friction: 7,
+                tension: 45,
+              }
+            ).start(() => {
+              resetGesture();
+            });
+          },
 
-      onPanResponderTerminate: () => {
-        if (isAnimating.current) {
-          return;
-        }
-
-        Animated.spring(
-          frontPosition,
-          {
-            toValue: {
-              x: 0,
-              y: 0,
-            },
-            useNativeDriver: true,
-            friction: 7,
-            tension: 45,
-          }
-        ).start(() => {
-          resetGesture();
-        });
-      },
-
-      onPanResponderTerminationRequest:
-        () => false,
-    })
-  ).current;
+        onPanResponderTerminationRequest:
+          () => false,
+      })
+    ).current;
 
   /*
   |--------------------------------------------------------------------------
@@ -739,15 +828,13 @@ export default function PolarisMovieStack({
         styles.container,
         {
           width: CARD_WIDTH,
-          height: CARD_HEIGHT + 70,
+          height:
+            CARD_HEIGHT + 70,
         },
       ]}
     >
-      {/*
-      |--------------------------------------------------------------------------
-      | THIRD
-      |--------------------------------------------------------------------------
-      */}
+
+      {/* THIRD */}
 
       {thirdMovie && (
         <Animated.View
@@ -792,11 +879,7 @@ export default function PolarisMovieStack({
         </Animated.View>
       )}
 
-      {/*
-      |--------------------------------------------------------------------------
-      | SECOND
-      |--------------------------------------------------------------------------
-      */}
+      {/* SECOND */}
 
       {secondMovie && (
         <Animated.View
@@ -841,11 +924,7 @@ export default function PolarisMovieStack({
         </Animated.View>
       )}
 
-      {/*
-      |--------------------------------------------------------------------------
-      | FRONT
-      |--------------------------------------------------------------------------
-      */}
+      {/* FRONT */}
 
       <Animated.View
         key="polaris-card-front"
@@ -869,17 +948,15 @@ export default function PolarisMovieStack({
                 rotate,
               },
               {
-                scale: currentCardScale,
+                scale:
+                  currentCardScale,
               },
             ],
           },
         ]}
       >
-        {/*
-        |--------------------------------------------------------------------------
-        | ADD TO POLARIS
-        |--------------------------------------------------------------------------
-        */}
+
+        {/* ADD TO POLARIS */}
 
         <Animated.View
           pointerEvents="none"
@@ -903,11 +980,7 @@ export default function PolarisMovieStack({
           </Text>
         </Animated.View>
 
-        {/*
-        |--------------------------------------------------------------------------
-        | IGNORE
-        |--------------------------------------------------------------------------
-        */}
+        {/* IGNORE */}
 
         <Animated.View
           pointerEvents="none"
