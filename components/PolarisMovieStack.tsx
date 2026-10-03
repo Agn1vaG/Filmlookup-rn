@@ -36,8 +36,8 @@ type PolarisMovieStackProps = {
   ) => void;
 };
 
-const CARD_WIDTH = 350;
-const CARD_HEIGHT = 530;
+const CARD_WIDTH = 420;
+const CARD_HEIGHT = 640;
 
 const SWIPE_THRESHOLD = 120;
 const SWIPE_OUT_DISTANCE = 500;
@@ -562,6 +562,7 @@ export default function PolarisMovieStack({
         pathname: "/movies/[id]",
         params: {
           id: movie.id.toString(),
+          mediaType: movie.name ? "tv" : "movie",
         },
       });
 

@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+
 module.exports = {
   content: [
     "./app/**/*.{js,jsx,ts,tsx}",
@@ -45,6 +46,15 @@ module.exports = {
         light300: "#9ca4ab",
         dark100: "#221f3d",
         dark200: "#0f0d23",
+      },
+
+      // Polaris — Sen typography
+      fontFamily: {
+        sen: ["Sen"],
+        "sen-medium": ["SenMedium"],
+        "sen-semibold": ["SenSemiBold"],
+        "sen-bold": ["SenBold"],
+        "sen-extrabold": ["SenExtraBold"],
       },
 
       fontSize: {

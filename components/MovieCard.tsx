@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 
-import { Image, Text, View } from "react-native";
+import { Image, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+
+import PolarisText from "@/components/PolarisText";
 
 import {
   fetchMovieDetails,
@@ -18,17 +21,12 @@ type MovieCardProps = {
   first_air_date?: string;
 };
 
-const CARD_WIDTH = 390;
-const CARD_HEIGHT = 630;
+const CARD_WIDTH = 420;
+const CARD_HEIGHT = 640;
 
-const detailsCache = new Map<
-  string,
-  MediaDetails
->();
+const detailsCache = new Map<string, MediaDetails>();
 
-const formatRuntime = (
-  runtime?: number | null
-) => {
+const formatRuntime = (runtime?: number | null) => {
   if (!runtime || runtime <= 0) {
     return "—";
   }
@@ -90,10 +88,7 @@ const formatAirDate = (date?: string) => {
     "Dec",
   ];
 
-  if (
-    month >= 1 &&
-    month <= 12
-  ) {
+  if (month >= 1 && month <= 12) {
     return `${months[month - 1]} ${year}`;
   }
 
@@ -109,14 +104,7 @@ const MovieCard = ({
   release_date,
   first_air_date,
 }: MovieCardProps) => {
-  /*
-  |--------------------------------------------------------------------------
-  | DETECT MEDIA TYPE
-  |--------------------------------------------------------------------------
-  */
-
-  const isSeries =
-    !!name && !title;
+  const isSeries = !!name && !title;
 
   const mediaType = isSeries
     ? "tv"
@@ -131,12 +119,6 @@ const MovieCard = ({
 
   const cacheKey =
     `${mediaType}-${id}`;
-
-  /*
-  |--------------------------------------------------------------------------
-  | DETAILS
-  |--------------------------------------------------------------------------
-  */
 
   const [details, setDetails] =
     useState<MediaDetails | null>(
@@ -193,12 +175,6 @@ const MovieCard = ({
     };
   }, [id, cacheKey, isSeries]);
 
-  /*
-  |--------------------------------------------------------------------------
-  | DISPLAY DATA
-  |--------------------------------------------------------------------------
-  */
-
   const runtime = formatRuntime(
     details?.runtime
   );
@@ -211,10 +187,8 @@ const MovieCard = ({
 
   const genres =
     details?.genres
-      ?.slice(0, 3)
-      .map(
-        (genre) => genre.name
-      )
+      ?.slice(0, 2)
+      .map((genre) => genre.name)
       .join(" • ") || "—";
 
   const rating =
@@ -243,188 +217,305 @@ const MovieCard = ({
         justifyContent: "center",
       }}
     >
+      {/* OUTER CARD */}
+
       <View
         style={{
           width: CARD_WIDTH,
           height: CARD_HEIGHT,
           borderRadius: 24,
           overflow: "hidden",
-          backgroundColor: "#0A1119",
+
+          backgroundColor: "#3A3A3C",
+
+          borderWidth: 1,
+          borderColor:
+            "rgba(255,255,255,0.22)",
+
           shadowColor: "#000",
           shadowOffset: {
             width: 0,
             height: 14,
           },
           shadowOpacity: 0.45,
-          shadowRadius: 20,
-          elevation: 12,
+          shadowRadius: 22,
+          elevation: 14,
         }}
       >
-        <Image
-          source={{
-            uri: posterUri,
-          }}
-          resizeMode="cover"
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
-        />
-
-        {/* TITLE */}
+        {/* HEADER */}
 
         <View
           style={{
             position: "absolute",
-            left: 16,
-            top: 16,
-            maxWidth: 280,
-            paddingHorizontal: 15,
-            minHeight: 34,
-            borderRadius: 17,
-            justifyContent: "center",
-            backgroundColor:
-              "rgba(8,8,12,0.62)",
-            borderWidth: 1,
-            borderColor:
-              "rgba(255,255,255,0.16)",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 58,
+
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+
+            paddingHorizontal: 17,
+
+            zIndex: 10,
           }}
         >
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
+          {/* TITLE */}
+
+          <View
             style={{
-              color: "#FFFFFF",
-              fontSize: 13,
-              fontWeight: "600",
+              maxWidth: 235,
+              minHeight: 32,
+
+              paddingHorizontal: 15,
+
+              borderRadius: 16,
+
+              justifyContent: "center",
+
+              backgroundColor:
+                "rgba(11,15,20,0.88)",
+
+              borderWidth: 1,
+              borderColor:
+                "rgba(255,255,255,0.08)",
+
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 3,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 6,
+              elevation: 3,
             }}
           >
-            {mediaTitle}
-          </Text>
+            <PolarisText
+              weight="medium"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={{
+                color: "#F4F7FA",
+                fontSize: 12,
+              }}
+            >
+              {mediaTitle}
+            </PolarisText>
+          </View>
+
+          {/* YEAR */}
+
+          <View
+            style={{
+              minWidth: 52,
+              height: 32,
+
+              paddingHorizontal: 12,
+
+              borderRadius: 16,
+
+              alignItems: "center",
+              justifyContent: "center",
+
+              backgroundColor:
+                "rgba(11,15,20,0.88)",
+
+              borderWidth: 1,
+              borderColor:
+                "rgba(255,255,255,0.08)",
+
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 3,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 6,
+              elevation: 3,
+            }}
+          >
+            <PolarisText
+              weight="medium"
+              style={{
+                color: "#F4F7FA",
+                fontSize: 11,
+              }}
+            >
+              {formattedDate}
+            </PolarisText>
+          </View>
         </View>
 
-        {/* MOVIE RUNTIME / SERIES STATS */}
+        {/* POSTER */}
 
         <View
           style={{
             position: "absolute",
-            left: 16,
-            bottom: 54,
-            maxWidth: 270,
-            minHeight: 34,
-            paddingHorizontal: 15,
-            borderRadius: 17,
-            justifyContent: "center",
-            backgroundColor:
-              "rgba(8,8,12,0.62)",
-            borderWidth: 1,
-            borderColor:
-              "rgba(255,255,255,0.16)",
+
+            left: 10,
+            right: 10,
+
+            top: 58,
+            bottom: 10,
+
+            borderRadius: 20,
+
+            overflow: "hidden",
+
+            backgroundColor: "#11151B",
           }}
         >
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
+          <Image
+            source={{
+              uri: posterUri,
+            }}
+            resizeMode="cover"
             style={{
-              color: "#FFFFFF",
-              fontSize: 13,
-              fontWeight: "500",
+              width: "100%",
+              height: "100%",
+            }}
+          />
+
+          {/* BOTTOM GRADIENT */}
+
+          <LinearGradient
+            pointerEvents="none"
+            colors={[
+              "rgba(0,0,0,0)",
+              "rgba(0,0,0,0.04)",
+              "rgba(0,0,0,0.18)",
+              "rgba(0,0,0,0.48)",
+              "rgba(0,0,0,0.72)",
+            ]}
+            locations={[
+              0,
+              0.48,
+              0.68,
+              0.84,
+              1,
+            ]}
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 170,
+            }}
+          />
+
+          {/* RUNTIME / SERIES STATS */}
+
+          <View
+            style={{
+              position: "absolute",
+              left: 10,
+              bottom: 50,
+
+              minHeight: 30,
+
+              paddingHorizontal: 13,
+
+              borderRadius: 15,
+
+              justifyContent: "center",
+
+              backgroundColor:
+                "rgba(9,11,15,0.82)",
+
+              borderWidth: 1,
+              borderColor:
+                "rgba(255,255,255,0.10)",
             }}
           >
-            {isSeries
-              ? seriesStats
-              : runtime}
-          </Text>
-        </View>
+            <PolarisText
+              weight="medium"
+              numberOfLines={1}
+              style={{
+                color: "#FFFFFF",
+                fontSize: 11,
+              }}
+            >
+              {isSeries
+                ? seriesStats
+                : runtime}
+            </PolarisText>
+          </View>
 
-        {/* GENRES */}
+          {/* GENRES */}
 
-        <View
-          style={{
-            position: "absolute",
-            left: 16,
-            bottom: 16,
-            maxWidth: 250,
-            height: 34,
-            paddingHorizontal: 15,
-            borderRadius: 17,
-            justifyContent: "center",
-            backgroundColor:
-              "rgba(8,8,12,0.62)",
-            borderWidth: 1,
-            borderColor:
-              "rgba(255,255,255,0.16)",
-          }}
-        >
-          <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
+          <View
             style={{
-              color: "#FFFFFF",
-              fontSize: 13,
-              fontWeight: "500",
+              position: "absolute",
+              left: 10,
+              bottom: 10,
+
+              maxWidth: 200,
+
+              minHeight: 30,
+
+              paddingHorizontal: 13,
+
+              borderRadius: 15,
+
+              justifyContent: "center",
+
+              backgroundColor:
+                "rgba(9,11,15,0.82)",
+
+              borderWidth: 1,
+              borderColor:
+                "rgba(255,255,255,0.10)",
             }}
           >
-            {genres}
-          </Text>
-        </View>
+            <PolarisText
+              weight="medium"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={{
+                color: "#FFFFFF",
+                fontSize: 11,
+              }}
+            >
+              {genres}
+            </PolarisText>
+          </View>
 
-        {/* RATING */}
+          {/* RATING */}
 
-        <View
-          style={{
-            position: "absolute",
-            right: 16,
-            bottom: 16,
-            height: 34,
-            paddingHorizontal: 14,
-            borderRadius: 17,
-            justifyContent: "center",
-            backgroundColor:
-              "rgba(8,8,12,0.62)",
-            borderWidth: 1,
-            borderColor:
-              "rgba(255,255,255,0.16)",
-          }}
-        >
-          <Text
+          <View
             style={{
-              color: "#FFFFFF",
-              fontSize: 13,
-              fontWeight: "600",
+              position: "absolute",
+              right: 10,
+              bottom: 10,
+
+              height: 30,
+
+              paddingHorizontal: 12,
+
+              borderRadius: 15,
+
+              alignItems: "center",
+              justifyContent: "center",
+
+              backgroundColor:
+                "rgba(9,11,15,0.82)",
+
+              borderWidth: 1,
+              borderColor:
+                "rgba(255,255,255,0.10)",
             }}
           >
-            ★ {formattedRating}
-          </Text>
-        </View>
-
-        {/* AIR DATE */}
-
-        <View
-          style={{
-            position: "absolute",
-            right: 16,
-            top: 16,
-            height: 34,
-            paddingHorizontal: 14,
-            borderRadius: 17,
-            justifyContent: "center",
-            backgroundColor:
-              "rgba(8,8,12,0.62)",
-            borderWidth: 1,
-            borderColor:
-              "rgba(255,255,255,0.16)",
-          }}
-        >
-          <Text
-            style={{
-              color: "#FFFFFF",
-              fontSize: 13,
-              fontWeight: "500",
-            }}
-          >
-            {formattedDate}
-          </Text>
+            <PolarisText
+              weight="semiBold"
+              style={{
+                color: "#FFFFFF",
+                fontSize: 11,
+              }}
+            >
+              ★ {formattedRating}
+            </PolarisText>
+          </View>
         </View>
       </View>
     </View>

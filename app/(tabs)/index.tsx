@@ -1,6 +1,7 @@
 import PolarisMovieStack from "@/components/PolarisMovieStack";
 import PolarisBackground from "@/components/PolarisBackground";
 import PolarisScreen from "@/components/PolarisScreen";
+import PolarisText from "@/components/PolarisText";
 
 import { fetchMovies, fetchSeries } from "@/services/api";
 import useFetch from "@/services/useFetch";
@@ -10,7 +11,6 @@ import { BlurView } from "expo-blur";
 import {
   ActivityIndicator,
   Pressable,
-  Text,
   View,
 } from "react-native";
 
@@ -19,8 +19,7 @@ import { useState } from "react";
 type HomeMode = "movies" | "series";
 
 export default function Index() {
-  const [mode, setMode] =
-    useState<HomeMode>("movies");
+  const [mode, setMode] = useState<HomeMode>("movies");
 
   const [backgroundPoster, setBackgroundPoster] =
     useState<string | null>(null);
@@ -51,7 +50,6 @@ export default function Index() {
         : [];
 
   /* TEMPORARY DEBUG LOGS */
-
   console.log("POLARIS MODE:", mode);
   console.log("MOVIES:", movies?.length);
   console.log("SERIES:", series?.length);
@@ -98,7 +96,7 @@ export default function Index() {
       >
         <PolarisScreen>
           <View className="flex-1 items-center justify-center px-6">
-            <Text
+            <PolarisText
               style={{
                 color: "#F4F7FA",
                 textAlign: "center",
@@ -111,7 +109,7 @@ export default function Index() {
                     ? "movies"
                     : "series"
                 } found`}
-            </Text>
+            </PolarisText>
           </View>
         </PolarisScreen>
       </PolarisBackground>
@@ -124,9 +122,7 @@ export default function Index() {
       posterPath={backgroundPoster}
     >
       <PolarisScreen>
-
         {/* Movies / Series selector */}
-
         <View
           style={{
             alignItems: "center",
@@ -194,21 +190,22 @@ export default function Index() {
                   />
                 )}
 
-                <Text
+                <PolarisText
+                  weight={
+                    mode === "movies"
+                      ? "medium"
+                      : "regular"
+                  }
                   style={{
                     color:
                       mode === "movies"
                         ? "#F4F7FA"
                         : "#7E8997",
                     fontSize: 12,
-                    fontWeight:
-                      mode === "movies"
-                        ? "500"
-                        : "400",
                   }}
                 >
                   Movies
-                </Text>
+                </PolarisText>
               </Pressable>
 
               <Pressable
@@ -238,28 +235,28 @@ export default function Index() {
                   />
                 )}
 
-                <Text
+                <PolarisText
+                  weight={
+                    mode === "series"
+                      ? "medium"
+                      : "regular"
+                  }
                   style={{
                     color:
                       mode === "series"
                         ? "#F4F7FA"
                         : "#7E8997",
                     fontSize: 12,
-                    fontWeight:
-                      mode === "series"
-                        ? "500"
-                        : "400",
                   }}
                 >
                   Series
-                </Text>
+                </PolarisText>
               </Pressable>
             </View>
           </View>
         </View>
 
         {/* Movie / Series Stack */}
-
         <View
           style={{
             flex: 1,
@@ -277,7 +274,6 @@ export default function Index() {
             }}
           />
         </View>
-
       </PolarisScreen>
     </PolarisBackground>
   );
