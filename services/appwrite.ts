@@ -1,14 +1,15 @@
-import { Client, Databases, ID, Query } from "appwrite";
+import { Client, TablesDB, ID, Query } from "appwrite";
 
-// env vars
+// Environment variables
 const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!;
-const COLLECTION_ID = process.env.EXPO_PUBLIC_APPWRITE_COLLECTION_ID!;
+const TABLE_ID = process.env.EXPO_PUBLIC_APPWRITE_COLLECTION_ID!;
 
+// Appwrite client
 const client = new Client()
   .setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!)
   .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!);
 
-const database = new Databases(client);
+const database = new TablesDB(client);
 
 // Types
 type Movie = {
@@ -25,28 +26,33 @@ type TrendingMovie = {
   title: string;
   poster_url: string;
   count: number;
-  [key: string]: any; // allow Appwrite system fields
+  [key: string]: any;
 };
 
-
 // Search Metrics Update
-export const updateSearchCount = async (query: string, movie: Movie) => {
+export const updateSearchCount = async (
+  query: string,
+  movie: Movie
+) => {
   try {
-    // Check existing record
-    const result = await database.listDocuments({
+    // Check if this search term already exists
+    const result = await database.listRows({
       databaseId: DATABASE_ID,
-      collectionId: COLLECTION_ID,
-      queries: [Query.equal("searchTerm", query), Query.limit(1)],
+      tableId: TABLE_ID,
+      queries: [
+        Query.equal("searchTerm", query),
+        Query.limit(1),
+      ],
     });
 
-    if (result.documents.length > 0) {
-      // Update count if found
-      const existing = result.documents[0];
+    if (result.rows.length > 0) {
+      // Update existing row
+      const existing = result.rows[0];
 
-      await database.updateDocument({
+      await database.updateRow({
         databaseId: DATABASE_ID,
-        collectionId: COLLECTION_ID,
-        documentId: existing.$id,
+        tableId: TABLE_ID,
+        rowId: existing.$id,
         data: {
           count: (existing.count ?? 0) + 1,
         },
@@ -55,11 +61,11 @@ export const updateSearchCount = async (query: string, movie: Movie) => {
       return;
     }
 
-    // Create new document
-    await database.createDocument({
+    // Create new row
+    await database.createRow({
       databaseId: DATABASE_ID,
-      collectionId: COLLECTION_ID,
-      documentId: ID.unique(),
+      tableId: TABLE_ID,
+      rowId: ID.unique(),
       data: {
         searchTerm: query,
         movie_id: movie.id,
@@ -77,15 +83,20 @@ export const updateSearchCount = async (query: string, movie: Movie) => {
 };
 
 // Trending Movies
-export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> => {
+export const getTrendingMovies = async (): Promise<
+  TrendingMovie[] | undefined
+> => {
   try {
-    const result = await database.listDocuments({
+    const result = await database.listRows({
       databaseId: DATABASE_ID,
-      collectionId: COLLECTION_ID,
-      queries: [Query.orderDesc("count"), Query.limit(5)],
+      tableId: TABLE_ID,
+      queries: [
+        Query.orderDesc("count"),
+        Query.limit(5),
+      ],
     });
 
-    return result.documents as unknown as TrendingMovie[];
+    return result.rows as unknown as TrendingMovie[];
   } catch (error) {
     console.error("Error loading trending:", error);
     return undefined;

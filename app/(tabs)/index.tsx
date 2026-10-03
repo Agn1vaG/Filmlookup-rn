@@ -1,32 +1,28 @@
-import MovieCard from "@/components/MovieCard";
-import SearchBar from "@/components/SearchBar";
-import TrendingCard from "@/components/TrendingCard";
+import PolarisMovieStack from "@/components/PolarisMovieStack";
+import PolarisBackground from "@/components/PolarisBackground";
+import PolarisScreen from "@/components/PolarisScreen";
+import PolarisText from "@/components/PolarisText";
 
-import { icons } from "@/constants/icons";
-import { images } from "@/constants/images";
-
-import { fetchMovies } from "@/services/api";
-import { getTrendingMovies } from "@/services/appwrite";
+import { fetchMovies, fetchSeries } from "@/services/api";
 import useFetch from "@/services/useFetch";
 
-import { useRouter } from "expo-router";
+import { BlurView } from "expo-blur";
+
 import {
   ActivityIndicator,
-  FlatList,
-  Image,
-  ScrollView,
-  Text,
+  Pressable,
   View,
 } from "react-native";
 
-export default function Index() {
-  const router = useRouter();
+import { useState } from "react";
 
-  const {
-    data: trendingMovies,
-    loading: trendingLoading,
-    error: trendingError,
-  } = useFetch(getTrendingMovies);
+type HomeMode = "movies" | "series";
+
+export default function Index() {
+  const [mode, setMode] = useState<HomeMode>("movies");
+
+  const [backgroundPoster, setBackgroundPoster] =
+    useState<string | null>(null);
 
   const {
     data: movies,
@@ -38,112 +34,247 @@ export default function Index() {
     })
   );
 
-  const listData = Array.isArray(movies) ? movies : [];
+  const {
+    data: series,
+    loading: seriesLoading,
+    error: seriesError,
+  } = useFetch(() => fetchSeries());
 
-  if (moviesLoading || trendingLoading) {
+  const listData =
+    mode === "movies"
+      ? Array.isArray(movies)
+        ? movies
+        : []
+      : Array.isArray(series)
+        ? series
+        : [];
+
+  /* TEMPORARY DEBUG LOGS */
+  console.log("POLARIS MODE:", mode);
+  console.log("MOVIES:", movies?.length);
+  console.log("SERIES:", series?.length);
+  console.log("LIST DATA:", listData.length);
+  console.log("FIRST ITEM:", listData[0]);
+
+  const loading =
+    mode === "movies"
+      ? moviesLoading
+      : seriesLoading;
+
+  const error =
+    mode === "movies"
+      ? moviesError
+      : seriesError;
+
+  if (loading) {
     return (
-      <View className="flex-1 bg-primary justify-center items-center">
-        <ActivityIndicator size="large" color="#fff" />
-      </View>
+      <PolarisBackground
+        variant="home"
+        posterPath={backgroundPoster}
+      >
+        <PolarisScreen>
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator
+              size="large"
+              color="#F4F7FA"
+            />
+          </View>
+        </PolarisScreen>
+      </PolarisBackground>
     );
   }
 
-  if (moviesError || trendingError) {
+  if (error || listData.length === 0) {
     return (
-      <View className="flex-1 bg-primary justify-center items-center">
-        <Text className="text-white">
-          Error: {moviesError?.message ?? trendingError?.message}
-        </Text>
-      </View>
+      <PolarisBackground
+        variant="home"
+        posterPath={
+          backgroundPoster ??
+          listData[0]?.poster_path ??
+          null
+        }
+      >
+        <PolarisScreen>
+          <View className="flex-1 items-center justify-center px-6">
+            <PolarisText
+              style={{
+                color: "#F4F7FA",
+                textAlign: "center",
+              }}
+            >
+              Error:{" "}
+              {error?.message ??
+                `No ${
+                  mode === "movies"
+                    ? "movies"
+                    : "series"
+                } found`}
+            </PolarisText>
+          </View>
+        </PolarisScreen>
+      </PolarisBackground>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#070715" }}>
-      <Image
-        source={images.bg}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-        }}
-      />
-
-      <FlatList
-        data={listData}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={3}
-        renderItem={({ item }) => (
-          <MovieCard
-            id={item.id}
-            poster_path={item.poster_path}
-            title={item.title}
-            vote_average={item.vote_average}
-            release_date={item.release_date}
-          />
-        )}
-        columnWrapperStyle={{
-          justifyContent: "flex-start",
-          gap: 20,
-          marginBottom: 10,
-        }}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 100,
-          paddingTop: 10,
-        }}
-        ListHeaderComponent={
-          <View className="mb-6">
-            <View
+    <PolarisBackground
+      variant="home"
+      posterPath={backgroundPoster}
+    >
+      <PolarisScreen>
+        {/* Movies / Series selector */}
+        <View
+          style={{
+            alignItems: "center",
+            paddingTop: 8,
+            zIndex: 100,
+            elevation: 100,
+          }}
+        >
+          <View
+            style={{
+              width: 170,
+              height: 40,
+              borderRadius: 20,
+              overflow: "hidden",
+              borderWidth: 1,
+              borderColor:
+                "rgba(220, 235, 255, 0.10)",
+              backgroundColor:
+                "rgba(5, 10, 17, 0.72)",
+            }}
+          >
+            <BlurView
+              pointerEvents="none"
+              intensity={20}
+              tint="dark"
               style={{
-                alignItems: "center",
-                justifyContent: "center",
-                marginTop: 45,
-                marginBottom: 30,
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
               }}
-            >
-              <Image
-                source={icons.logo}
-                style={{ width: 48, height: 40 }}
-                resizeMode="contain"
-              />
-            </View>
-
-            <SearchBar
-              onPress={() => router.push("/search")}
-              placeholder="Search for a movie"
             />
 
-            {Array.isArray(trendingMovies) && trendingMovies.length > 0 && (
-              <View className="mt-8">
-                <Text className="text-white text-lg font-bold mb-3">
-                  Trending Movies
-                </Text>
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+              }}
+            >
+              <Pressable
+                onPress={() => setMode("movies")}
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {mode === "movies" && (
+                  <View
+                    pointerEvents="none"
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      top: 0,
+                      right: 0,
+                      bottom: 0,
+                      borderRadius: 20,
+                      backgroundColor:
+                        "rgba(220, 235, 255, 0.065)",
+                      borderWidth: 1,
+                      borderColor:
+                        "rgba(220, 235, 255, 0.12)",
+                    }}
+                  />
+                )}
 
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 26 }}
+                <PolarisText
+                  weight={
+                    mode === "movies"
+                      ? "medium"
+                      : "regular"
+                  }
+                  style={{
+                    color:
+                      mode === "movies"
+                        ? "#F4F7FA"
+                        : "#7E8997",
+                    fontSize: 12,
+                  }}
                 >
-                  {trendingMovies.map((item, index) => (
-                    <TrendingCard
-                      key={item.movie_id}
-                      movie={item}
-                      index={index}
-                    />
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+                  Movies
+                </PolarisText>
+              </Pressable>
 
-            <Text className="text-white text-lg font-bold mb-3 mt-8">
-              Latest Movies
-            </Text>
+              <Pressable
+                onPress={() => setMode("series")}
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {mode === "series" && (
+                  <View
+                    pointerEvents="none"
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      top: 0,
+                      right: 0,
+                      bottom: 0,
+                      borderRadius: 20,
+                      backgroundColor:
+                        "rgba(220, 235, 255, 0.065)",
+                      borderWidth: 1,
+                      borderColor:
+                        "rgba(220, 235, 255, 0.12)",
+                    }}
+                  />
+                )}
+
+                <PolarisText
+                  weight={
+                    mode === "series"
+                      ? "medium"
+                      : "regular"
+                  }
+                  style={{
+                    color:
+                      mode === "series"
+                        ? "#F4F7FA"
+                        : "#7E8997",
+                    fontSize: 12,
+                  }}
+                >
+                  Series
+                </PolarisText>
+              </Pressable>
+            </View>
           </View>
-        }
-      />
-    </View>
+        </View>
+
+        {/* Movie / Series Stack */}
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            transform: [{ translateY: -40 }],
+          }}
+        >
+          <PolarisMovieStack
+            movies={listData}
+            onCurrentMovieChange={(movie) => {
+              setBackgroundPoster(
+                movie?.poster_path ?? null
+              );
+            }}
+          />
+        </View>
+      </PolarisScreen>
+    </PolarisBackground>
   );
 }
