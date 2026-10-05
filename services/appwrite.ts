@@ -1,15 +1,9 @@
-import { Client, TablesDB, ID, Query } from "appwrite";
+import { ID, Query } from "appwrite";
+import { tablesDB as database } from "@/services/appwriteClient";
 
 // Environment variables
 const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!;
 const TABLE_ID = process.env.EXPO_PUBLIC_APPWRITE_COLLECTION_ID!;
-
-// Appwrite client
-const client = new Client()
-  .setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!)
-  .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!);
-
-const database = new TablesDB(client);
 
 // Types
 type Movie = {

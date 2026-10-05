@@ -1,10 +1,7 @@
-import { Account, Client, ID } from "appwrite";
+import { ID } from "appwrite";
+import { account } from "@/services/appwriteClient";
 
-const client = new Client()
-  .setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!)
-  .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!);
-
-export const account = new Account(client);
+export { account };
 
 export async function getSessionUser() {
   try {

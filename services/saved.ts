@@ -1,8 +1,5 @@
-import { Client, Databases } from "appwrite";
-
-const client = new Client()
-  .setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!)
-  .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!);
+import { Databases } from "appwrite";
+import { client } from "@/services/appwriteClient";
 
 const db = new Databases(client);
 
