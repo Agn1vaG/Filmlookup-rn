@@ -1,16 +1,21 @@
 import { signup } from "@/services/auth";
+import { useSession } from "@/contexts/SessionContext";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Signup() {
   const router = useRouter();
+  const { refreshSession } = useSession();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const submit = async () => {
     await signup(email, password, username);
+
+    await refreshSession();
+
     router.replace("/(tabs)/profile");
   };
 

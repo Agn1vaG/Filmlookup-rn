@@ -1,4 +1,5 @@
 import { login } from "@/services/auth";
+import { useSession } from "@/contexts/SessionContext";
 import PolarisText from "@/components/PolarisText";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -16,6 +17,7 @@ import {
 
 export default function Login() {
   const router = useRouter();
+  const { refreshSession } = useSession();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,6 +34,8 @@ export default function Login() {
       setLoading(true);
 
       await login(email.trim(), password);
+
+      await refreshSession();
 
       router.replace("/(tabs)/together");
     } catch (error) {
