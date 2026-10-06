@@ -1,14 +1,32 @@
-import { ID } from "appwrite";
+import { AppwriteException, ID } from "appwrite";
+import type { Models } from "appwrite";
 import { account } from "@/services/appwriteClient";
 
 export { account };
 
-export async function getSessionUser() {
+export type SessionUser = Models.User;
+
+const UNAUTHENTICATED_TYPES = new Set([
+  "general_unauthorized_scope",
+  "user_session_missing",
+  "user_session_expired",
+]);
+
+function isUnauthenticatedError(error: unknown): boolean {
+  if (!(error instanceof AppwriteException)) return false;
+
+  return error.code === 401 || UNAUTHENTICATED_TYPES.has(error.type);
+}
+
+export async function getSessionUser(): Promise<SessionUser | null> {
   try {
     return await account.get();
-  } catch {
-    const anon = await account.createAnonymousSession();
-    return anon;
+  } catch (error) {
+    if (isUnauthenticatedError(error)) {
+      return null;
+    }
+
+    throw error;
   }
 }
 
